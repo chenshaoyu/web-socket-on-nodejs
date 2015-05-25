@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>Real-Time Chart via Web Socket</title>
+
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+        <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+		<script type="text/javascript">
+            $(function () {
+                $(document).ready(function () {
+                Highcharts.setOptions({
+                    global: {
+                        useUTC: false
+                }
+            });
+
+        $('#container').highcharts({
+            chart: {
+                type: 'line',
+                animation: Highcharts.svg, // don't animate in old IE
+                marginRight: 10,
+                events: {
+                    load: function () {
+
+                        // set up the updating of the chart each second
+                        var series = this.series[0];
+                        
+                        var socket = io();
+                        socket.on('Pressure', function(msg){
+                            var x = (new Date()).getTime(), // current time
+                            y = msg;
+                            series.addPoint([x, y], true, true);});
+                    }
+                }
+            },
+            title: {
+                text: 'Real-Time Chart via Web Socket (node.js + socket.io)'
+            },
+            xAxis: {
+                type: 'datetime',
+                tickPixelInterval: 150
+            },
+            yAxis: {
+                title: {
+                    text: 'Pressure (psi)'
+                },
+                plotLines: [{
+                    value: 0,
+                    width: 1,
+                    color: '#808080'
+                }]
+            },
+            tooltip: {
+                formatter: function () {
+                    return '<b>' + this.series.name + '</b><br/>' +
+                        Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+                        Highcharts.numberFormat(this.y, 2);
+                }
+            },
+            legend: {
+                enabled: false
+            },
+            exporting: {
+                enabled: false
+            },
+            series: [{
+                name: 'Pressure',
+                data: (function () {
+                    // generate an array of random data
+                    var data = [],
+                        time = (new Date()).getTime(),
+                        i;
+
+                    for (i = -255; i <= 0; i += 1) {
+                        data.push({
+                            x: time + i * 1000,
+                            y: Math.random()*500 + 500
+                        });
+                    }
+                    return data;
+                }())
+            }]
+        });
+    });
+});
+		</script>
+	</head>
+	<body>
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+
+    <div id="container" style="min-width: 320px; height: 480px; margin: 16px"></div>
+
+	</body>
+</html>
